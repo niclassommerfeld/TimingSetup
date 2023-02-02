@@ -91,14 +91,26 @@ for i in range(num_rays):
 			print('escaped')
 			escaped_count += 1
 			break
-		if hit_border = 0:
-			angle = 
-		if hit_border = 1:
-			angle = 
-		if hit_border = 2:
-			angle = 
-		if hit_border = 3:
-			angle = 
+		if hit_border == 0:
+			if angle < np.pi:
+				angle = angle - 2*angle_check
+			if angle > np.pi:
+				angle = angle + 2*(np.pi*angle_check)
+		if hit_border == 1:
+			if angle < np.pi:
+				angle = 2*np.pi - angle_check
+			if angle > 0.5*np.pi:
+				angle = angle + 2*(np.pi*angle_check)
+		if hit_border == 2:
+			if angle < np.pi:
+				angle = angle + 2*(np.pi*angle_check)
+			if angle > np.pi:
+				angle = angle - 2*angle_check
+		if hit_border == 3:
+			if angle < 1.5*np.pi:
+				angle = angle - 2*angle_check
+			if angle > 1.5*np.pi:
+				angle = np.pi - angle_check
 		print('Starting params: x_pos={}, y_pos={}, angle={}'.format(x_pos, y_pos, angle))
 		print('hit at')
 		print(hit)
