@@ -3,19 +3,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 import shapely
 from shapely.geometry import LineString, Point
+import time
+
+start_time = time.time()
 
 # not quite so Constant
 #number of rays and max bounces
-num_rays = 100000
+num_rays = 1000000
 num_bounces = 100
 #size of rectangle
-rect = [0,35,0,1] #x1,x2,y1,y2
+rect = [0,35,0,1.5] #x1,x2,y1,y2
 #size of incident area, eps is used to avoid starting on the edge(should be fine after first step should test)
-eps = 0.0000000001
+#eps = 0.0000000001
+eps = 0
 xs_min = 15 + eps
 xs_max = 35 - eps
 ys_min = 0 + eps
-ys_max = 1 - eps
+ys_max = 1.5 - eps
 #different definitions of rectangle
 a = (rect[0],rect[2])
 b= (rect[0],rect[3])
@@ -37,14 +41,20 @@ n_scinti = 1.58
 crit_angle = np.arcsin(n_out/n_scinti)
 #print('crit angle')
 #print(np.rad2deg(crit_angle))
+# #global variables used for crossfunction info(i know it should be avoided)
 #counters to track final states
 escaped_count = 0
 to_many_bounces_count = 0
 detected_count = 0
-#global variables used for crossfunction info(i know it should be avoided)
+side_count = 0
+top_count = 0
 no_outcome = 0
 angle = 0
 hit_border=0
+sipm_size = 3
+det_top = [0,sipm_size,rect[3],rect[3]] #x1,x2,y1,y2
+#det_side = [0,0,rect[3]-sipm_size,rect[3]] #x1,x2,y1,y2
+det_side = [0,0,rect[3]-1.3,rect[3]] #x1,x2,y1,y2
 
 def angle_between(v1, v2):
 	cosang = np.dot(v1, v2)
@@ -77,7 +87,8 @@ def intersects(start, angle):
 				#plot_step(x_pos,x2,y_pos,y2)
 				return hit
 			except:
-				global no_outcome 
+				no_outcome = 1
+				#global no_outcome 
 				#no_outcome += 1
 				#print('no hit found\n')
 
@@ -104,23 +115,36 @@ def plot_step(x1,x2,y1,y2):#,color
 	y = np.linspace(y1,y2, 100)
 	ax.plot(x, y, linewidth=1.0, label='1')#, color=color)
 
-def detection():
-	i=1
+def detection(hit,side_flag,top_flag):
+	global det_top
+	global det_side
+	if hit[0] >= det_top[0] and hit[0] <= det_top [1] and hit[1] >= det_top[2] and hit[1] <= det_top [3]:
+		if top_flag ==False:
+			global top_count
+			top_count += 1
+	if hit[0] >= det_side[0] and hit[0] <= det_side [1] and hit[1] >= det_side[2] and hit[1] <= det_side [3]:
+		if side_flag ==False:
+			global side_count
+			side_count += 1
 
 # Monte Carlo loop
 for i in range(num_rays):
-	print(i)
-	#start parameter
 	skip_border = 5
+	#print(i)
+	#start parameter
 	x_pos = random.uniform(xs_min, xs_max)
 	y_pos = random.uniform(ys_min, ys_max)
 	angle = random.uniform(0, 2*np.pi)
+	side_flag = False
+	top_flag = False
 	#fig, ax = plt.subplots()
 	#plot_box()
 	#print('Starting params: x_pos={}, y_pos={}, angle={}'.format(x_pos, y_pos, angle))
 	for j in range(num_bounces):
 		#print('this is', j)
 		hit = intersects((x_pos,y_pos), angle)
+		#print(hit)
+		detection(hit,side_flag,top_flag)
 		skip_border=hit_border
 		#print(hit_border)
 		x2 = x_pos + (rect[1]+rect[3])*np.cos(angle)
@@ -135,7 +159,7 @@ for i in range(num_rays):
 		'''
 		'''
 		if angle_check  > crit_angle and angle_check  < np.pi-crit_angle:
-			print('escaped')
+			#print('escaped')
 			escaped_count += 1
 			break
 		
@@ -161,7 +185,6 @@ for i in range(num_rays):
 			if angle > 1.5*np.pi:
 				angle = np.pi - angle_check
 		#print('hit')
-		#print(hit)
 		try:
 			x_pos = hit[0]
 			y_pos = hit[1]
@@ -177,7 +200,10 @@ for i in range(num_rays):
 	#ax.legend()
 	#plt.show()
 
-		
+end_time = time.time()
+print("The runtime of the script is", end_time - start_time, "seconds")
 print(str(escaped_count) + ' escaped')
-print(str(no_outcome) + ' no outcomes')
+#print(str(no_outcome) + ' no outcomes')
 print(str(to_many_bounces_count) + ' to many bounces')
+print(str(side_count) + ' detected on side')
+print(str(top_count) + ' detected on top')
